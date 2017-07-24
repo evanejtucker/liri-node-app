@@ -5,16 +5,11 @@
 var keys = require("./keys.js");
 
 // allows access to twitter, request, spotify, and fs node packages
-var twitter = require("twitter");
-var request = require("request");
+var Twitter = require("twitter");
+var Request = require("request");
 var Spotify = require('node-spotify-api');
 var fs = require("fs");
 
-// varaibles to store api keys from keys.js
-var consumer_key = keys.twitterKeys.consumer_key;
-var consumer_secret = keys.twitterKeys.consumer_secret;
-var access_token_key = keys.twitterKeys.access_token_key;
-var access_token_secret = keys.twitterKeys.access_token_secret;
 
 // variable for the question being asked lir
 // i.e. "spotify-this-song" or "my-tweets"
@@ -28,6 +23,9 @@ var searchTerm = process.argv[3];
 // the "do-what-it-says" command is executed
 var readFile = false;
 
+// variable for counting the results from commands
+var num = 0;
+
 // Functions
 //--------------------------------------------------------------------------------
 
@@ -37,18 +35,23 @@ function searchTweets() {
 	console.log("finding my tweets...");
 	console.log("-----------------------------------------------------------");
 
-	// adding twitter credentials
-	var client = new twitter({
-	  consumer_key: process.env.consumer_key,
-	  consumer_secret: process.env.consumer_secret,
-	  access_token_key: process.env.access_token_key,
-	  access_token_secret: process.env.access_token_secret
-	});
+	var client = new Twitter(keys.twitterKeys);
 
-	client.get('search/tweets', {q: "node.js"}, function(error, tweets, response) {
-	  // if(error) throw error;
-	  console.log(tweets);  // The favorites. 
-	  console.log(JSON.stringify(response, null, 2));  // Raw response object. 
+	var params = {screen_name: 'etuck94'};
+
+	client.get('statuses/user_timeline', params, function(error, tweets, response) {
+  		if (!error) {
+  			// for loop to loop through 20 tweets
+  			for (i=0; i<20; i++) {
+  				num++;
+
+  				console.log(num);
+  				console.log(tweets[i].created_at);
+  				console.log(tweets[i].text);
+ 				console.log("-----------------------------------------------------------");
+  			}
+  		}
+  		num = 0;
 	});
 
 }
@@ -59,15 +62,15 @@ function searchMovie() {
 	console.log("Finding your movie...");
 	console.log("-----------------------------------------------------------");
 
-	// if there is no searchTerm, use "the sign" as default
+	// if there is no searchTerm, use "Mr Nobody" as default
 	if (!searchTerm) {
 		searchTerm = "Mr Nobody";
 	}
 
-	request("http://www.omdbapi.com/?t="+searchTerm+"&y=&plot=short&apikey=40e9cece", function(error, response, body) {
+	Request("http://www.omdbapi.com/?t="+searchTerm+"&y=&plot=short&apikey=40e9cece", function(error, response, body) {
 	  // If the request is successful (i.e. if the response status code is 200)
 	  if (!error && response.statusCode === 200) {
-	    // Parse the body of the site and recover just the imdbRating
+  		// Parse the body of the site and recover just the imdbRating
 	    console.log("Title: " + JSON.parse(body).Title);
 	    console.log("Release Year: " + JSON.parse(body).Year);
 	    console.log("Rating: " + JSON.parse(body).imdbRating);
@@ -101,6 +104,7 @@ function searchSong() {
 		searchTerm = "the sign";
 	}
 
+
  	// search spotify for track name, limit results to 20.
 	spotify.search({ type: 'track', query: searchTerm, limit: 20 }, function(err, data) {
   		if (err) {
@@ -108,8 +112,11 @@ function searchSong() {
     		return console.log('Error occurred: ' + err);
   		}
   		// will print out 5 results to save space
- 		for (i=0; i<5; i++) {
+ 		for (i=0; i<20; i++) {
+ 			num++
+
  			// prints out the track, artsit, and album name, and the spotify url
+ 			console.log(num);
  			console.log(JSON.stringify("Track Name: " + data.tracks.items[i].name, null, 2));
  			console.log(JSON.stringify("Artist Name: " + data.tracks.items[i].album.artists[0].name, null, 2));
  			console.log(JSON.stringify("Album Name: " + data.tracks.items[i].album.name, null, 2));
@@ -117,6 +124,7 @@ function searchSong() {
  			console.log("-----------------------------------------------------------");
  		}		 
 	});
+	num = 0;
 }
 
 
@@ -160,5 +168,8 @@ switch(question) {
 		// reads file using fs, and runs search spotify
 		read();
 		break;
+	default:
+		// if liri doesnt recognize a command, this is the default statement
+		console.log("Liri doesnt know how to do that");
 }
 
