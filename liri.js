@@ -24,19 +24,18 @@ var question = process.argv[2];
 // either a song title or movie name
 var searchTerm = process.argv[3];
 
-// readFile is set to true when the "read" fucntion runs,
-// when read file is true, search spotify for "I want it that way"
-// var readFile = false;
-
-
-
-
+// variable that will change teh search term if 
+// the "do-what-it-says" command is executed
+var readFile = false;
 
 // Functions
 //--------------------------------------------------------------------------------
 
+
+// function for "my-tweets"
 function searchTweets() {
 	console.log("finding my tweets...");
+	console.log("-----------------------------------------------------------");
 
 	// adding twitter credentials
 	var client = new twitter({
@@ -54,8 +53,16 @@ function searchTweets() {
 
 }
 
+
+// function for "movie-this"
 function searchMovie() {
 	console.log("Finding your movie...");
+	console.log("-----------------------------------------------------------");
+
+	// if there is no searchTerm, use "the sign" as default
+	if (!searchTerm) {
+		searchTerm = "Mr Nobody";
+	}
 
 	request("http://www.omdbapi.com/?t="+searchTerm+"&y=&plot=short&apikey=40e9cece", function(error, response, body) {
 	  // If the request is successful (i.e. if the response status code is 200)
@@ -72,7 +79,9 @@ function searchMovie() {
 	});
 }
 
-function searchSong(searchTerm) {
+
+// function for "spotify-this-song"
+function searchSong() {
 	console.log("Searching Spotify...");
  	console.log("-----------------------------------------------------------");
 
@@ -82,15 +91,16 @@ function searchSong(searchTerm) {
   		secret: "f8685b1c922a4f169edf1e5e83b31681",
 	});
 
-	// if function is being run in by "do-wht-it-says", play a different song
-	// than when the search term is blank.
-	// if(readFile === true) {
-	// 	searchTerm = "I want it that way";
-	// } else if(!process.argv[3]) {
-	// 	searchTerm = "the sign";
-	// }
-	searchTerm = process.argv[3];
- 	
+	// Readfile is set to true when the read function is run
+	if (readFile === true) {
+		searchTerm = "I want it that way";
+		readFile = false;
+	}
+	// if there is no searchTerm, use "the sign" as default
+	if (!searchTerm) {
+		searchTerm = "the sign";
+	}
+
  	// search spotify for track name, limit results to 20.
 	spotify.search({ type: 'track', query: searchTerm, limit: 20 }, function(err, data) {
   		if (err) {
@@ -109,12 +119,13 @@ function searchSong(searchTerm) {
 	});
 }
 
+
+// function for "do-what-it-says"
 function read() {
 	console.log("Doing what it says...");
 	console.log("-----------------------------------------------------------");
 
-	// sets search term to "I want it that way"
-	// readFile = true;
+	readFile = true;
 
 	// reads from file random txt
 	fs.readFile("random.txt", "utf8", function(error, data) {
@@ -122,6 +133,7 @@ function read() {
 			// search spotify
 			searchSong();
 	});
+
 }
 
 
